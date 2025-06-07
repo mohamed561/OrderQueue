@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Reminder } from '../App';
 
@@ -29,6 +28,21 @@ const Dashboard: React.FC<DashboardProps> = ({
     return '';
   };
 
+  const getSectionClass = (section: string): string => {
+    switch (section.toLowerCase()) {
+      case 'boucherie':
+        return 'boucherie';
+      case 'volaille':
+        return 'volaille';
+      case 'fromage':
+        return 'fromage';
+      case 'boulangerie':
+        return 'boulangerie';
+      default:
+        return '';
+    }
+  };
+
   return (
     <section className="dashboard">
       <h2 className="section-title">Active Reminders</h2>
@@ -46,7 +60,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
               <div className="reminder-header">
                 <h3 className="order-number">Order #{reminder.orderNumber}</h3>
-                <span className="section-badge">{reminder.section}</span>
+                <span className={`section-badge ${getSectionClass(reminder.section)}`}>
+                  {reminder.section}
+                </span>
               </div>
               
               <div className="time-display">
