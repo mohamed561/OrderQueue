@@ -8,24 +8,20 @@ interface CreateReminderFormProps {
 const CreateReminderForm: React.FC<CreateReminderFormProps> = ({ onAddReminder }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [section, setSection] = useState('');
-  const [timer, setTimer] = useState('');
+
+  const sectionOptions = ['Boucherie', 'Volaille', 'Fromage', 'Boulangerie'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!orderNumber.trim() || !section.trim() || !timer.trim()) {
+    if (!orderNumber.trim() || !section) {
       return;
     }
 
-    const timerMinutes = parseInt(timer);
-    if (isNaN(timerMinutes) || timerMinutes <= 0) {
-      return;
-    }
-
-    onAddReminder(orderNumber.trim(), section.trim(), timerMinutes);
+    // Default timer of 15 minutes since it's no longer user input
+    onAddReminder(orderNumber.trim(), section, 15);
     setOrderNumber('');
     setSection('');
-    setTimer('');
   };
 
   return (
@@ -51,38 +47,26 @@ const CreateReminderForm: React.FC<CreateReminderFormProps> = ({ onAddReminder }
           <label className="form-label" htmlFor="section">
             Section
           </label>
-          <input
-            type="text"
+          <select
             id="section"
             className="form-input"
             value={section}
             onChange={(e) => setSection(e.target.value)}
-            placeholder="e.g., Electronics, Grocery"
             required
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="timer">
-            Timer (minutes)
-          </label>
-          <input
-            type="number"
-            id="timer"
-            className="form-input"
-            value={timer}
-            onChange={(e) => setTimer(e.target.value)}
-            placeholder="Enter minutes"
-            min="1"
-            max="999"
-            required
-          />
+          >
+            <option value="">Select a section</option>
+            {sectionOptions.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button 
           type="submit" 
           className="btn btn-primary btn-full"
-          disabled={!orderNumber.trim() || !section.trim() || !timer.trim()}
+          disabled={!orderNumber.trim() || !section}
         >
           Create Reminder
         </button>

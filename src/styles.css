@@ -98,6 +98,18 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #f0f8ff;
   transition: all 0.2s ease;
+  animation: flash-red 2s infinite;
+}
+
+@keyframes flash-red {
+  0%, 100% { 
+    border-color: #f0f8ff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  50% { 
+    border-color: #e74c3c;
+    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+  }
 }
 
 .reminder-card:hover {
@@ -111,13 +123,7 @@ body {
 
 .reminder-card.urgent {
   border-left: 4px solid #e74c3c;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
+  animation: flash-red 1s infinite;
 }
 
 .reminder-header {
