@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Reminder } from '../App';
 
@@ -56,11 +57,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           {reminders.map(reminder => (
             <div 
               key={reminder.id} 
-              className={`reminder-card ${getUrgencyClass(reminder.timeLeft)}`}
+              className={`reminder-card ${getUrgencyClass(reminder.timeLeft)} ${getSectionClass(reminder.section)}`}
             >
               <div className="reminder-header">
                 <h3 className="order-number">Order #{reminder.orderNumber}</h3>
-                <span className={`section-badge ${getSectionClass(reminder.section)}`}>
+                <span className="section-badge">
                   {reminder.section}
                 </span>
               </div>

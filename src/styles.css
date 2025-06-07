@@ -1,3 +1,4 @@
+
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -100,14 +101,33 @@ body {
   animation: flash-red 2s infinite;
 }
 
+.reminder-card.boucherie {
+  background: #e74c3c;
+  color: white;
+}
+
+.reminder-card.volaille {
+  background: white;
+  color: #e74c3c;
+  border: 3px solid #e74c3c;
+}
+
+.reminder-card.fromage {
+  background: #f1c40f;
+  color: #2c3e50;
+}
+
+.reminder-card.boulangerie {
+  background: #d2691e;
+  color: white;
+}
+
 @keyframes flash-red {
   0%, 100% { 
-    border-color: #f0f8ff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    opacity: 1;
   }
   50% { 
-    border-color: #e74c3c;
-    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+    opacity: 0.7;
   }
 }
 
@@ -137,7 +157,22 @@ body {
 .order-number {
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+.reminder-card.boucherie .order-number {
+  color: white;
+}
+
+.reminder-card.volaille .order-number {
+  color: #e74c3c;
+}
+
+.reminder-card.fromage .order-number {
   color: #2c3e50;
+}
+
+.reminder-card.boulangerie .order-number {
+  color: white;
 }
 
 .section-badge {
@@ -146,25 +181,17 @@ body {
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 500;
+  background: rgba(0, 0, 0, 0.2);
 }
 
-.section-badge.boucherie {
+.reminder-card.volaille .section-badge {
   background: #e74c3c;
+  color: white;
 }
 
-.section-badge.volaille {
-  background: white;
-  color: #e74c3c;
-  border: 2px solid #e74c3c;
-}
-
-.section-badge.fromage {
-  background: #f1c40f;
-  color: #2c3e50;
-}
-
-.section-badge.boulangerie {
-  background: #d2691e;
+.reminder-card.fromage .section-badge {
+  background: #2c3e50;
+  color: white;
 }
 
 .time-display {
@@ -176,8 +203,23 @@ body {
   display: block;
   font-size: 2.5rem;
   font-weight: 700;
-  color: #4ab1f1;
   line-height: 1;
+}
+
+.reminder-card.boucherie .time-left {
+  color: white;
+}
+
+.reminder-card.volaille .time-left {
+  color: #e74c3c;
+}
+
+.reminder-card.fromage .time-left {
+  color: #2c3e50;
+}
+
+.reminder-card.boulangerie .time-left {
+  color: white;
 }
 
 .reminder-card.warning .time-left {
@@ -190,25 +232,41 @@ body {
 
 .time-label {
   font-size: 0.9rem;
-  color: #7a8b9a;
   margin-top: 0.25rem;
   display: block;
+  opacity: 0.8;
 }
 
 .progress-bar {
   width: 100%;
   height: 6px;
-  background: #f0f8ff;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
 
+.reminder-card.fromage .progress-bar {
+  background: rgba(44, 62, 80, 0.3);
+}
+
+.reminder-card.volaille .progress-bar {
+  background: rgba(231, 76, 60, 0.3);
+}
+
 .progress-fill {
   height: 100%;
-  background: #4ab1f1;
+  background: rgba(255, 255, 255, 0.8);
   transition: width 0.3s ease;
   border-radius: 3px;
+}
+
+.reminder-card.fromage .progress-fill {
+  background: #2c3e50;
+}
+
+.reminder-card.volaille .progress-fill {
+  background: #e74c3c;
 }
 
 .reminder-card.warning .progress-fill {
