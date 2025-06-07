@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import CreateReminderForm from './components/CreateReminderForm';
 import SuccessfulPickups from './components/SuccessfulPickups';
+import Footer from './components/Footer';
 import './styles.css';
 
 export interface Reminder {
@@ -24,19 +25,23 @@ export interface CompletedOrder {
 const App: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setReminders(prev => 
-        prev.map(reminder => ({
-          ...reminder,
-          timeLeft: Math.max(0, reminder.timeLeft - 1)
-        }))
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+    }
   }, []);
+
+  useEffect(() => {
+    document.body.className = isDarkMode ? 'dark-theme' : '';
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   const addReminder = (orderNumber: string, section: string, timer: number) => {
     const newReminder: Reminder = {
@@ -69,7 +74,7 @@ const App: React.FC = () => {
 
   return (
     <div className="app">
-      <Header />
+      <Header isDarkMode={isDarkMode} onThemeToggle={toggleTheme} />
       <main className="main-content">
         <Dashboard 
           reminders={reminders}
@@ -79,6 +84,7 @@ const App: React.FC = () => {
         <CreateReminderForm onAddReminder={addReminder} />
         <SuccessfulPickups completedOrders={completedOrders} />
       </main>
+      <Footer />
     </div>
   );
 };

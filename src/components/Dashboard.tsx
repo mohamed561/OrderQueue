@@ -13,22 +13,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   onCompleteOrder, 
   onRemoveReminder 
 }) => {
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getProgressPercentage = (timeLeft: number, originalTime: number): number => {
-    return ((originalTime - timeLeft) / originalTime) * 100;
-  };
-
-  const getUrgencyClass = (timeLeft: number): string => {
-    if (timeLeft <= 60) return 'urgent';
-    if (timeLeft <= 300) return 'warning';
-    return '';
-  };
-
   const getSectionClass = (section: string): string => {
     switch (section.toLowerCase()) {
       case 'boucherie':
@@ -57,25 +41,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           {reminders.map(reminder => (
             <div 
               key={reminder.id} 
-              className={`reminder-card ${getUrgencyClass(reminder.timeLeft)} ${getSectionClass(reminder.section)}`}
+              className={`reminder-card ${getSectionClass(reminder.section)}`}
             >
               <div className="reminder-header">
                 <h3 className="order-number">Order #{reminder.orderNumber}</h3>
                 <span className="section-badge">
                   {reminder.section}
                 </span>
-              </div>
-              
-              <div className="time-display">
-                <span className="time-left">{formatTime(reminder.timeLeft)}</span>
-                <span className="time-label">remaining</span>
-              </div>
-
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill"
-                  style={{ width: `${getProgressPercentage(reminder.timeLeft, reminder.originalTime)}%` }}
-                ></div>
               </div>
 
               <div className="reminder-actions">
