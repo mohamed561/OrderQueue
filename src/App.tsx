@@ -87,7 +87,7 @@ const App: React.FC = () => {
     setReminders(prev => prev.filter(r => r.id !== id));
   };
 
-  // Notification every 10s (for testing)
+  // Notification every 10 minutes (600,000 ms)
 useEffect(() => {
   const checkInterval = setInterval(() => {
     if (reminders.length > 0) {
@@ -104,7 +104,7 @@ useEffect(() => {
         }
       });
     }
-  }, 10 * 1000); // Every 10 seconds
+  }, 10 * 60 * 1000); // ⏱️ 10 minutes in milliseconds
 
   return () => clearInterval(checkInterval);
 }, [reminders]);
