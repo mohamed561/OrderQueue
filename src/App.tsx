@@ -12,6 +12,7 @@ export interface Reminder {
   section: string;
   timeLeft: number;
   originalTime: number;
+  endedAt?: number;
 }
 
 export interface CompletedOrder {
@@ -22,37 +23,42 @@ export interface CompletedOrder {
 }
 
 const App: React.FC = () => {
-  const [reminders, setReminders] = useState<Reminder[]>(() => {
-    const saved = localStorage.getItem('reminders');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>(() => {
-    const saved = localStorage.getItem('completedOrders');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Request notification permission
+  useEffect(() => {
+    Notification.requestPermission();
+  }, []);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
-  });
+  // Load from localStorage on startup
+  useEffect(() => {
+    const savedReminders = localStorage.getItem('reminders');
+    const savedCompletedOrders = localStorage.getItem('completedOrders');
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedReminders) setReminders(JSON.parse(savedReminders));
+    if (savedCompletedOrders) setCompletedOrders(JSON.parse(savedCompletedOrders));
+    if (savedTheme === 'dark') setIsDarkMode(true);
+  }, []);
+
+  // Save to localStorage on reminders or completed orders change
+  useEffect(() => {
+    localStorage.setItem('reminders', JSON.stringify(reminders));
+  }, [reminders]);
+
+  useEffect(() => {
+    localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
+  }, [completedOrders]);
 
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark-theme' : '';
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // Persist reminders on change
-  useEffect(() => {
-    localStorage.setItem('reminders', JSON.stringify(reminders));
-  }, [reminders]);
-
-  // Persist completedOrders on change
-  useEffect(() => {
-    localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
-  }, [completedOrders]);
-
   const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode(!isDarkMode);
   };
 
   const addReminder = (orderNumber: string, section: string, timer: number) => {
@@ -83,6 +89,49 @@ const App: React.FC = () => {
   const removeReminder = (id: string) => {
     setReminders(prev => prev.filter(r => r.id !== id));
   };
+
+  // Timer tick + notification every 10s when expired
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReminders(prev =>
+        prev.map(reminder => {
+          if (reminder.timeLeft > 0) {
+            return { ...reminder, timeLeft: reminder.timeLeft - 1 };
+          } else {
+            if (!reminder.endedAt) {
+              // First time timer ends
+              if (Notification.permission === 'granted') {
+                new Notification(`⏰ You still didn't pickup order #${reminder.orderNumber}`, {
+                  body: `Section: ${reminder.section}\nTimer has ended!`,
+                  silent: false
+                });
+              }
+              if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+              }
+              return { ...reminder, endedAt: Date.now() };
+            } else {
+              const elapsed = Math.floor((Date.now() - reminder.endedAt) / 1000);
+              if (elapsed % 10 === 0) {
+                if (Notification.permission === 'granted') {
+                  new Notification(`⏰ You still didn't pickup order #${reminder.orderNumber}`, {
+                    body: `Section: ${reminder.section}`,
+                    silent: false
+                  });
+                }
+                if (navigator.vibrate) {
+                  navigator.vibrate([200, 100, 200]);
+                }
+              }
+              return reminder;
+            }
+          }
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="app">
