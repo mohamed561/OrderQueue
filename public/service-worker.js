@@ -1,85 +1,97 @@
-// public/service-worker.js
-import { openDB } from 'idb';
+const SECTION_ICONS = {
+  'A': '/icons/a.png',
+  'B': '/icons/b.png',
+  'C': '/icons/c.png',
+  'D': '/icons/d.png',
+  'default': '/icon-192x192.png'
+};
 
-const CACHE_NAME = 'order-queue-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
-];
+const activeAlarms = new Map();
 
-// Cache static assets on install
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
-  );
-  self.skipWaiting();
-});
+function getIconForSection(section) {
+  return SECTION_ICONS[section] || SECTION_ICONS.default;
+}
 
-// Check reminders and show notifications
-async function checkReminders() {
+async function openIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('reminders-db', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('reminders')) {
+        db.createObjectStore('reminders');
+      }
+      if (!db.objectStoreNames.contains('completed')) {
+        db.createObjectStore('completed');
+      }
+    };
+  });
+}
+
+async function getReminders() {
+  const db = await openIndexedDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('reminders', 'readonly');
+    const store = tx.objectStore('reminders');
+    const request = store.get('current');
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function checkAndNotifyReminders() {
+  console.log('🔍 Checking reminders...', new Date().toLocaleTimeString());
+
   try {
-    const db = await openDB('reminders-db', 1);
-    const reminders = await db.get('reminders', 'current') || [];
+    const reminders = await getReminders();
+    const currentTime = Date.now();
 
-    if (reminders.length > 0) {
-      // Vibrate pattern: 200ms vibration, 100ms pause, 200ms vibration
-      const vibratePattern = [200, 100, 200];
+    for (const reminder of reminders) {
+      const timeSinceCreation = currentTime - reminder.createdAt;
+      const triggerInterval = 1000; // 1 second for testing
 
-      reminders.forEach(reminder => {
-        self.registration.showNotification('Order Pickup Reminder', {
-          body: `Order #${reminder.orderNumber} in ${reminder.section} needs pickup!`,
-          icon: '/icon-192x192.png',
-          badge: '/icon-72x72.png',
-          vibrate: vibratePattern,
-          tag: `reminder-${reminder.id}`,
-          renotify: true
-        });
-      });
+      if (timeSinceCreation >= triggerInterval) {
+        const alarmKey = `alarm-${reminder.id}`;
+
+        if (!activeAlarms.has(alarmKey)) {
+          activeAlarms.set(alarmKey, {
+            reminderId: reminder.id,
+            startTime: currentTime,
+            notificationSent: true
+          });
+
+          const icon = getIconForSection(reminder.section);
+
+          self.registration.showNotification('🚨 Reminder Alert', {
+            body: `Order #${reminder.orderNumber} in ${reminder.section}`,
+            icon,
+            tag: reminder.id
+          });
+        }
+      }
     }
-  } catch (error) {
-    console.error('Error checking reminders:', error);
+  } catch (err) {
+    console.error('❌ Error checking reminders:', err);
   }
 }
 
-// Handle background sync
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'check-reminders') {
-    event.waitUntil(checkReminders());
+self.addEventListener('message', (event) => {
+  const { type, reminderId } = event.data || {};
+
+  if (type === 'TRIGGER_CHECK') {
+    checkAndNotifyReminders();
+  }
+
+  if (type === 'CLEANUP_ALARM' && reminderId) {
+    activeAlarms.delete(`alarm-${reminderId}`);
   }
 });
 
-// Set up periodic sync (every 10 minutes)
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'reminder-check') {
-    event.waitUntil(checkReminders());
-  }
-});
-
-// Activate the service worker
-self.addEventListener('activate', async (event) => {
-  event.waitUntil(
-    Promise.all([
-      // Clear old caches
-      caches.keys().then(keys => Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )),
-      // Register periodic sync
-      (async () => {
-        try {
-          await self.registration.periodicSync.register('reminder-check', {
-            minInterval: 10 * 60 * 1000 // 10 minutes
-          });
-        } catch (error) {
-          console.log('Periodic sync registration failed:', error);
-        }
-      })()
-    ])
-  );
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: 'window' }).then(clientsArr => {
+    const client = clientsArr.find(c => c.focused) || clientsArr[0];
+    if (client) client.focus();
+  }));
 });
