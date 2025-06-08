@@ -10,9 +10,7 @@ export interface Reminder {
   id: string;
   orderNumber: string;
   section: string;
-  timeLeft: number;
-  originalTime: number;
-  endedAt?: number;
+  createdAt: number;
 }
 
 export interface CompletedOrder {
@@ -27,47 +25,46 @@ const App: React.FC = () => {
   const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Request notification permission
-  useEffect(() => {
-    Notification.requestPermission();
-  }, []);
-
-  // Load from localStorage on startup
+  // Load from localStorage on mount
   useEffect(() => {
     const savedReminders = localStorage.getItem('reminders');
-    const savedCompletedOrders = localStorage.getItem('completedOrders');
+    const savedCompleted = localStorage.getItem('completedOrders');
     const savedTheme = localStorage.getItem('theme');
 
     if (savedReminders) setReminders(JSON.parse(savedReminders));
-    if (savedCompletedOrders) setCompletedOrders(JSON.parse(savedCompletedOrders));
+    if (savedCompleted) setCompletedOrders(JSON.parse(savedCompleted));
     if (savedTheme === 'dark') setIsDarkMode(true);
   }, []);
 
-  // Save to localStorage on reminders or completed orders change
+  // Save reminders to localStorage
   useEffect(() => {
     localStorage.setItem('reminders', JSON.stringify(reminders));
   }, [reminders]);
 
+  // Save completed orders to localStorage
   useEffect(() => {
     localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
   }, [completedOrders]);
 
+  // Save theme to localStorage
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark-theme' : '';
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+  // Ask notification permission
+  useEffect(() => {
+    Notification.requestPermission();
+  }, []);
 
-  const addReminder = (orderNumber: string, section: string, timer: number) => {
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  const addReminder = (orderNumber: string, section: string) => {
     const newReminder: Reminder = {
       id: Date.now().toString(),
       orderNumber,
       section,
-      timeLeft: timer * 60,
-      originalTime: timer * 60
+      createdAt: Date.now()
     };
     setReminders(prev => [...prev, newReminder]);
   };
@@ -90,54 +87,33 @@ const App: React.FC = () => {
     setReminders(prev => prev.filter(r => r.id !== id));
   };
 
-  // Timer tick + notification every 10s when expired
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setReminders(prev =>
-        prev.map(reminder => {
-          if (reminder.timeLeft > 0) {
-            return { ...reminder, timeLeft: reminder.timeLeft - 1 };
-          } else {
-            if (!reminder.endedAt) {
-              // First time timer ends
-              if (Notification.permission === 'granted') {
-                new Notification(`⏰ You still didn't pickup order #${reminder.orderNumber}`, {
-                  body: `Section: ${reminder.section}\nTimer has ended!`,
-                  silent: false
-                });
-              }
-              if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
-              }
-              return { ...reminder, endedAt: Date.now() };
-            } else {
-              const elapsed = Math.floor((Date.now() - reminder.endedAt) / 1000);
-              if (elapsed % 10 === 0) {
-                if (Notification.permission === 'granted') {
-                  new Notification(`⏰ You still didn't pickup order #${reminder.orderNumber}`, {
-                    body: `Section: ${reminder.section}`,
-                    silent: false
-                  });
-                }
-                if (navigator.vibrate) {
-                  navigator.vibrate([200, 100, 200]);
-                }
-              }
-              return reminder;
-            }
-          }
-        })
-      );
-    }, 1000);
+  // Notification every 10s (for testing)
+useEffect(() => {
+  const checkInterval = setInterval(() => {
+    if (reminders.length > 0) {
+      reminders.forEach(reminder => {
+        if (Notification.permission === 'granted') {
+          new Notification(`🛎 Reminder: Order #${reminder.orderNumber}`, {
+            body: `Section: ${reminder.section}\nYou still haven't picked it up!`,
+            silent: false
+          });
+        }
 
-    return () => clearInterval(interval);
-  }, []);
+        if (navigator.vibrate) {
+          navigator.vibrate([300, 100, 300]);
+        }
+      });
+    }
+  }, 10 * 1000); // Every 10 seconds
+
+  return () => clearInterval(checkInterval);
+}, [reminders]);
 
   return (
     <div className="app">
       <Header isDarkMode={isDarkMode} onThemeToggle={toggleTheme} />
       <main className="main-content">
-        <Dashboard 
+        <Dashboard
           reminders={reminders}
           onCompleteOrder={completeOrder}
           onRemoveReminder={removeReminder}
