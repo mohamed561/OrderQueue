@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -23,24 +22,37 @@ export interface CompletedOrder {
 }
 
 const App: React.FC = () => {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [reminders, setReminders] = useState<Reminder[]>(() => {
+    const saved = localStorage.getItem('reminders');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-    }
-  }, []);
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>(() => {
+    const saved = localStorage.getItem('completedOrders');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
 
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark-theme' : '';
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
+  // Persist reminders on change
+  useEffect(() => {
+    localStorage.setItem('reminders', JSON.stringify(reminders));
+  }, [reminders]);
+
+  // Persist completedOrders on change
+  useEffect(() => {
+    localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
+  }, [completedOrders]);
+
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(prev => !prev);
   };
 
   const addReminder = (orderNumber: string, section: string, timer: number) => {
