@@ -6,8 +6,8 @@ const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
 // Cache static assets on install
